@@ -1,0 +1,88 @@
+#Parametre LogNormale
+mu <- 2
+sigma <-0.8
+
+E_LogNom_theorique <- exp(mu+(1/2)*sigma)
+var_LogNom_theorique <- exp(2*mu+sigma^2) * (exp(sigma^2)-1)
+
+cbind(E_LogNom_theorique,var_LogNom_theorique)
+
+#Parametre Gamma
+alpha <- 2
+beta <- 1/5
+
+E_gamma_theorique <- alpha/beta
+var_gamma_theorique <- alpha/beta^2
+
+cbind(E_gamma_theorique,var_gamma_theorique)
+
+#-------------------------------------------------#
+#Uniforme
+set.seed(2020)
+
+m <- 100000
+
+U<-matrix(runif(m),byrow=TRUE)
+
+#-------------------------------------------------#
+###Couple (X1,X2) comonotone###
+X1_como <- qlnorm(U, mu, sigma)
+X2_como <- qgamma(U, alpha, beta)
+
+#Esperance
+EX1_como <- mean(X1_como)
+EX2_como <- mean(X2_como)
+
+VX1_como <- var(X1_como)
+VX2_como <- var(X2_como)
+
+cbind(EX1_como,EX2_como,VX1_como,VX2_como)
+
+#Covariance
+cov_como <- mean(X1_como*X2_como)-EX1_como*EX2_como
+
+#Correlation de Pearson
+corr_como <- cov_como/(sqrt(VX1_como*VX2_como))
+
+
+#S comonotone
+
+esperance.stoploss <- function(d, s){
+  sded <- pmax(s - d, 0)
+  stoploss <- mean(sded)
+  return(stoploss)
+}
+
+S_como <- X1_como+X2_como
+
+
+Phi_como <- sapply(20, esperance.stoploss, s = sort(S_como))
+
+
+
+#-------------------------------------------------#
+###Couple (X1',X2') antimonotone###
+X1_anti <- qlnorm(U, mu, sigma)
+X2_anti <- qgamma(1-U, alpha, beta)
+
+EX1_anti <- mean(X1_anti)
+EX2_anti <- mean(X2_anti)
+
+VX1_anti <- var(X1_anti)
+VX2_anti <- var(X2_anti)
+
+cbind(EX1_anti,EX2_anti,VX1_anti,VX2_anti)
+
+#Covariance
+cov_anti <- mean(X1_anti*X2_anti)-EX1_anti*EX2_anti
+
+#Correlation de Pearson
+corr_anti <- cov_anti/(sqrt(VX1_anti*VX2_anti))
+
+
+#Esperance de la fonction StopLoss
+S_anti <-X1_anti+X2_anti
+
+Phi_anti<-sapply(20, esperance.stoploss, s = sort(S_anti))
+
+
