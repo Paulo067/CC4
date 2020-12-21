@@ -1,0 +1,82 @@
+#parametres
+
+mu1 <- 3
+mu2 <- 2
+sigma <- 1
+
+a <- log(exp(mu1)+exp(mu2))
+b <- sigma
+
+#question a)
+x <- seq(0,200,1)
+
+#Fonction de répartition de S
+FS_como <- plnorm(x,a,b)
+
+
+plot(x, FS_como,type="l",lty=1, lwd=2,main="Fonction de répartition de S",col="blue",ylim = c(0,1))
+
+
+#Valeur de F(40)
+FS_como_40 <- FS_como[41]
+FS_como_40
+
+
+#Correlation de pearson
+EX1_como <- exp(mu1+(1/2)*sigma^2)
+EX2_como <- exp(mu2+(1/2)*sigma^2)
+EX1X2_como<-exp((mu1+mu2)+((2*sigma)^2)/2)
+
+VX1_como <- exp(2*mu1+sigma^2)*(exp(sigma^2)-1)
+VX2_como <- exp(2*mu2+sigma^2)*(exp(sigma^2)-1)
+cbind(EX1,EX2,VX1,VX2)
+
+cov_como<-EX1X2_como-EX1_como*EX2_como
+corr_como<-cov_como/sqrt(VX1_como*VX2_como)
+
+
+
+#question b)
+
+#paramètres
+y_1 <- (x-sqrt(x^2 -4* exp(mu1+mu2)))/(2*exp(mu1))
+y_2 <- (x+sqrt(x^2 -4* exp(mu1+mu2)))/(2*exp(mu1))
+cbind(y_2[41],y_1[41])
+
+
+c <- log(y_2)
+d <- log(y_1)
+e<-2*exp((1/2)*(mu1+mu2))
+
+#valeurs demandées pour Y1 et Y2
+y_1[41]
+y_2[41]
+
+c[41]
+d[41]
+
+#Fonction de réparition loi Normale
+Norm1 <- pnorm(c,0,1)
+Norm2 <- pnorm(d,0,1)
+
+cbind(Norm1[41],Norm2[41])
+#Fonction de répartition de F
+FS_anti <-Norm1-Norm2 
+plot(x, FS_anti,type="l",lty=1, lwd=2,main="Fonction de répartition de S",col="blue",ylim = c(0,1))
+
+#valeur demandée par sujet
+FS_anti[41]
+
+#Correlation de Pearson
+EX1X2_anti<-exp(mu1+mu2)
+
+EX1_anti <- exp(mu1+(1/2)*sigma)
+EX2_anti <- exp(mu2+(1/2)*sigma)
+VX1_anti <- exp(2*mu1+sigma^2)*(exp(sigma^2)-1)
+VX2_anti <- exp(2*mu2+sigma^2)*(exp(sigma^2)-1)
+
+cov_anti<-EX1X2_anti-EX1_anti*EX2_anti
+
+corr_anti<-cov_anti/sqrt(VX1_anti*VX2_anti)
+
+
