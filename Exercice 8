@@ -1,0 +1,113 @@
+#parametres
+a1<-2.5
+a2<-3.2
+g0<-1.1
+b1<-2.5/100
+b2<-3.2/100
+
+#variable aléatoire K par récursivite
+beta<-pmax(b1,b2,((1/b1)+(1/b2))^(-1))
+alpha<-a1+a2-g0
+b0<-((1/b1)+(1/b2))^(-1)
+
+#Fonction pour avoir les gammas pondérées
+GetGammaWeights5 <- function(alpha.params, beta.params, k.max) { 
+  alpha.param <- sum(a1,a2,-g0) 
+  beta.param <- beta 
+  sigma.param <- (b1 / b2)^(a1-g0) *(b2/b2)^(a2-g0)* (((1/b1)+(1/b2))^(-1)/b2)^(g0)
+  zeta.param <- sapply(1:k.max, function(k)  
+    ((a1-g0) / k * (1 - b1 / beta) ^ k)+ ((a2-g0) / k * (1 - b2 / beta) ^ k) + (g0/k)*(1 - b0 /beta)^k) 
+  xi.param <- 1 
+  for(k in 1:k.max) { 
+    xi.param <- c(xi.param, 1 / k * sum(1:k * zeta.param[1:k] * rev(xi.param))) 
+  } 
+  p.param <- sigma.param * xi.param 
+  
+  return(p.param) 
+} 
+
+#Calcul de Pk-------------------------------------------------------------
+pk<-GetGammaWeights5(alpha.params=alpha, beta.params=beta, k.max=1000)
+
+#Valeurs souhaités dans l'enonce
+pk[1]
+pk[6]
+pk[11]
+
+#FOnction de Repartition
+v.max<-2000
+
+FS_boucle<-NULL
+for (i in 0:v.max){
+  FS_boucle[i+1]<-sum(pk*pgamma(i,alpha+0:1000,b2))
+}
+
+FS<-FS_boucle
+
+#Graphique de la FS
+plot(c(0:v.max),FS,col="blue",type="l" ,lty=1, lwd=2,main="Fonction de répartition",ylab = "FS(x)",xlab ="x",xlim = c(0,800))
+lines(c(0:v.max),fs)
+
+
+#Densité
+
+fs<-NULL
+for (i in 0:v.max){
+  fs[i+1]<-sum(pk * dgamma(i, alpha + 0:1000, b2))
+  
+} 
+#Verifications
+sum(fs)
+
+
+ES<-sum(c(0:v.max)*fs)
+ES
+
+
+#Fonction Pour VAR et TVAR
+
+VaR<-function(kappa) {
+  sum(FS<kappa)
+}
+
+
+S.esperance.tronquee <- function(b) {
+  sum(pk*(1-pgamma(b,1+alpha+0:1000,b2))*((alpha+0:1000)/beta))
+}
+
+#VaR et TVAR de kappa_500
+
+kappa500<-FS[501]
+VaRS_500<-sapply(kappa500, function(kappa) VaR(kappa))
+ETS_500<-sapply(VaRS_500, function(b) S.esperance.tronquee(b))
+TVAR_500<-(1/(1-kappa500))*ETS_500
+
+
+FS[501]-kappa500
+
+
+#VAR ET TVAR GRAPHIQUE
+
+kappa<-seq(0,0.999,0.001)
+VaRS_graph<-sapply(kappa, function(kappa) VaR(kappa))
+
+plot(kappa,VaRS_graph,col="blue",type="l" ,lty=1, lwd=2,main="Value at Risk",ylab = "VaR",xlab ="kappa",xlim = c(0,1),ylim=c(0,750))
+abline(h=ES,col="green", lty=2, lwd=2)
+legend(0.0, 750, legend=c("VaR","E[S]"),lty=c(1,2), cex=1.1,bg='lightgrey',lwd=2:2,col=c("blue","green"))
+
+ETS_graph<-sapply(VaRS_graph, function(b) S.esperance.tronquee(b))
+
+
+plot(VaRS_graph,ETS_graph,col="blue",type="l" ,lty=1, lwd=2,main="Espérance Tronquée",ylab = "E[S x 1 {S> VaR}]",xlab ="VaR")
+abline(h=ES,col="green", lty=2, lwd=2)
+legend(0.0, 750, legend=c("E[S x 1 {S> VaR}]","E[S]"),lty=c(1,2), cex=1.1,bg='lightgrey',lwd=2:2,col=c("blue","green"))
+
+TVAR<-(1/(1-kappa))*ETS_graph
+TVAR[1]
+plot(kappa,TVAR,col="blue",type="l" ,lty=1, lwd=2,main="Tail Value at Risk",ylab = "TVaR",xlab ="kappa",xlim = c(0,1),ylim=c(150,800))
+
+
+TVAR_T<-(1/(1-kappa))*ETS_graph+ (1/(1-kappa))*(FS[VaRS_graph+1]-kappa)*VaRS_graph
+plot(kappa,TVAR_T,col="blue",type="l" ,lty=1, lwd=2,main="Tail Value at Risk",ylab = "TVaR",xlab ="kappa",xlim = c(0,1),ylim=c(150,800))
+abline(h=ES,col="green", lty=2, lwd=2)
+legend(0.0, 750, legend=c("TVaR","E[S]"),lty=c(1,2), cex=1.1,bg='lightgrey',lwd=2:2,col=c("blue","green"))
