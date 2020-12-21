@@ -1,0 +1,71 @@
+#parametres des lois de Poissons
+a1<-1.2
+a2<-1.9
+a3<-2.5
+a12<-0.6
+a123<-0.2
+
+#Parametre de M 1 2 3
+lam_M1<-a1+a12+a123
+lam_M2<-a2+a12+a123
+lam_M3<-a3+a123
+
+#parametre de la loi poisson compo
+
+lam_N<-lam_M1+lam_M2+lam_M3-2*a123-a12
+
+#Variable C
+PC_1<-(lam_M1+lam_M2+lam_M3-2*a12-3*a123)/lam_N
+PC_2<-a12/lam_N
+PC_3<-a123/lam_N
+
+fC<-c(0,PC_1,PC_2,PC_3)
+cbind(fC[2],fC[3],fC[4])
+
+#Fonction pour l'algorithme de Panjer
+panjer.poisson<-function(lam,fB,xmax)
+{
+  # Algorithme de Panjer
+  # Cas Poisson
+  # Loi discrete pour B
+  aa<-0
+  bb<-lam
+  ll<-length(fB)
+  fX<-exp(lam*(fB[1]-1))
+  fB<-c(fB,rep(0,xmax-ll+1))
+  for (i in 1:xmax)
+  {
+    j<-i+1
+    fX<-c(fX,(1/(1-aa*fB[1]))*sum(fB[2:j]*fX[i:1]*(bb*(1:i)/i+aa)))    
+  }
+  
+  return(fX)
+}
+
+#Densité et Fonction de répartition de N
+fN<-panjer.poisson(lam_N,fC,100)
+FN<-cumsum(fN)
+
+plot(0:100,FN,col="blue",type="l" ,lty=1, lwd=2,main="Fonction de répartition & masse de probabilité",ylab = "f(x)",xlab ="x",xlim = c(0,25))
+lines(0:100,fN,col="green", lty=1, lwd=2)
+legend(15.5,0.5, legend=c("Fonc. rép.","FMP"),lty=c(1,2), cex=1.1,bg='lightgrey',lwd=2:2,col=c("blue","green"))
+
+#Value at Risk
+kappa<-c(0.5,0.6,0.7,0.8,0.9,0.99,0.999)
+
+
+Value.at.Risk<-function(k) {
+  sum(FN<k)
+}
+
+VaR_N<-sapply(kappa, function(kappa) Value.at.Risk(kappa))
+
+cbind(kappa,VaR_N)
+
+
+kappa_graph<-seq(0,0.999,0.001)
+VaR_N_graph<-sapply(kappa_graph, function(kappa_graph) Value.at.Risk(kappa_graph))
+
+plot(kappa_graph,VaR_N_graph,type="l",lty=1, lwd=2,main="Value at Risk",col="blue",ylab="VaR(kappa)",xlab="kappa")
+points(kappa,VaR_N,col="red",lwd=2)
+legend(0,18, legend=c("Value at Risk","Points demandés"),lty=c(1,NA),pch=c(NA,1), cex=1.1,bg='lightgrey',lwd=2:2,col=c("blue","red"))
