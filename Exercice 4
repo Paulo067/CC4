@@ -1,0 +1,67 @@
+#parametres
+a <- -0.6
+x <- 3
+
+
+#fonctions pour calculs
+
+#Pour H(x,X,X)
+H <- function(x,b){
+  (1-exp(-b*x)-b*x*exp(-b*x))
+}
+
+
+#Pour G(x,X,X)
+G <- function(x,b1,b2){
+  (b2/(b2-b1)*(1-exp(-b1*x))+b1/(b1-b2)*(1-exp(-b2*x)))
+}
+
+#Pour eta
+eta<- function(d,b){
+  (2/b*(exp(-b*d)+b*d*exp(-b*d)+b^2*d^2*exp(-b*d)/2)-d*(exp(-b*d)+b*d*exp(-b*d)))
+}
+
+#Pour gamma
+gamma <- function(d,b1,b2){
+  (b2/(b2-b1)*exp(-b1*d)/b1+b1/(b1-b2)*exp(-b2*d)/b2)
+}
+
+#Pour Value at risk
+VaR<-function(kappa) {
+  sum(FS_graph<kappa)
+}
+
+#Fonction de répartition
+FS<-(1+a)*H(x,1)+a*H(x,2)-2*a*G(x,1,2)
+
+
+pas<-0.001
+xx<-seq(0,8,pas)
+
+FS_graph<-(1+a)*H(xx,1)+a*H(xx,2)-2*a*G(xx,1,2)
+
+plot(xx,FS_graph,col="blue",type="l" ,lty=1, lwd=2,main="Fonction de répartition de S",ylab = "F(x)",xlab ="x")
+
+
+#Fonction Stop-Loss
+
+pi<-(1+a)*eta(x,1)+a*eta(x,2)-2*a*gamma(x,1,2)
+pi_graph<-(1+a)*eta(xx,1)+a*eta(xx,2)-2*a*gamma(xx,1,2)
+
+plot(xx,pi_graph,col="blue",type="l" ,lty=1, lwd=2,main="Fonction de Stop-Loss de S",ylab = "PI(x)",xlab ="x")
+
+#Value at Risk
+kappa<-FS
+VaR_S<-3
+#TVAR
+TVAR<-(1/(1-kappa))*pi+VaR_S
+
+
+#Pour graphique
+kappa_graph<-seq(0,0.999,0.001)
+VaR_graph<-sapply(kappa_graph, function(kappa) VaR(kappa))*pas
+pi_graph_VAR<-(1+a)*eta(VaR_graph,1)+a*eta(VaR_graph,2)-2*a*gamma(VaR_graph,1,2)
+plot(kappa_graph,VaR_graph,col="blue",type="l" ,lty=1, lwd=2,main="Value at Risk",ylab = "VaR_kappa",xlab ="kappa")
+
+TVAR_graph<- (1/(1-kappa_graph))*pi_graph_VAR+VaR_graph
+plot(kappa_graph,TVAR_graph,col="blue",type="l" ,lty=1, lwd=2,main="Tail Value at Risk",ylab = "TVaR_kappa",xlab ="kappa")
